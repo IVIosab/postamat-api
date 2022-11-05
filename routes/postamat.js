@@ -13,14 +13,34 @@ router.post('/', async (req, res) => {
     }
 })
 
-//Getting postamats based on query
-router.get('/', generalHandler, async (req, res) => {
+//Getting postamats based on circle query
+router.get('/circle', circleHandler, async (req, res) => {
     try{
         res.json(res.postamat)
     } catch (err) {
         res.status(500).json({message: err.message})
     }
 })
+
+//Getting postamats based on circle query
+router.get('/district', districtHandler, async (req, res) => {
+    try{
+        res.json(res.postamat)
+    } catch (err) {
+        res.status(500).json({message: err.message})
+    }
+})
+
+//Getting postamats based on query
+router.get('/admin', adminHandler, async (req, res) => {
+    try{
+        res.json(res.postamat)
+    } catch (err) {
+        res.status(500).json({message: err.message})
+    }
+})
+
+
 
 //Updating one postamat
 router.put('/:id', async (req, res) => {
@@ -53,44 +73,62 @@ router.delete('/:id', async (req, res) => {
     }
 })
 
-async function generalHandler(req, res, next){
+async function circleHandler(req, res, next){
     let postamat
-    let query = req.query
-    let area = {}
-    let circleQuery = false;
-    if(query.hasOwnProperty('circle')){
-        let circle = query.circle.slice(1,-1).split(',')
-        let lon = parseFloat(circle[0])
-        let lat = parseFloat(circle[1])
-        let r = parseInt(circle[2])
-        circleQuery = true
-        area = {
-            near: [lon, lat],
-            maxDistance: r,
-            spherical: true,
-            distanceField: "dist.calculated"
-        }
-        
-    }
-    delete query.circle
+    let types = req.query.type.slice(1,-1).split(',')
+    let lon = parseFloat(req.query.lon)
+    let lat = parseFloat(req.query.lat)
+    let radius = parseFloat(req.query.radius)
+    let model = req.query.model
     try {
         Postamat.ensureIndexes({'geometry.coordinates': '2dsphere'})
-        if(circleQuery){
-            postamat = await Postamat.find({
-                'geometry.coordinates': {
-                    $near: {
-                        $maxDistance: area.maxDistance,
-                        $geometry: {
-                            type: 'Point',
-                            coordinates: area.near
-                        }
+        postamat = await Postamat.find({
+            'geometry.coordinates': {
+                $near: {
+                    $maxDistance: radius,
+                    $geometry: {
+                        type: 'Point',
+                        coordinates: [lon,lat]
                     }
                 }
-            }).find(query)
+            }
+        }).find({type: {$in: types}}).find({model: model})
+        if(postamat == null){
+            return res.status(404).json({message: 'Cannot Find Postamats'})
         }
-        else{
-            postamat = await Postamat.find(query)
+    } catch (err) {
+        console.log(err.message)
+        return res.status(500).json({message: err.message})
+    }
+    res.postamat = postamat
+    next()
+}
+
+async function districtHandler(req, res, next){
+    let postamat
+    let types = req.query.type.slice(1,-1).split(',')
+    let districts = req.query.district.slice(1,-1).split(',')
+    let model = req.query.model
+    try {
+        postamat = await Postamat.find({type: {$in: types}}).find({district: {$in: districts}}).find({model: model})
+        if(postamat == null){
+            return res.status(404).json({message: 'Cannot Find Postamats'})
         }
+    } catch (err) {
+        console.log(err.message)
+        return res.status(500).json({message: err.message})
+    }
+    res.postamat = postamat
+    next()
+}
+
+async function adminHandler(req, res, next){
+    let postamat
+    let types = req.query.type.slice(1,-1).split(',')
+    let admin = req.query.admin.slice(1,-1).split(',')
+    let model = req.query.model
+    try {
+        postamat = await Postamat.find({type: {$in: types}}).find({adminstrativeDistrict: {$in: admin}}).find({model: model})
         if(postamat == null){
             return res.status(404).json({message: 'Cannot Find Postamats'})
         }
