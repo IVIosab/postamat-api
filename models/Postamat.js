@@ -1,38 +1,37 @@
 const mongoose = require('mongoose')
 
-const postamatSchema = new mongoose.Schema({
-    address: {
+const GeoSchema = new mongoose.Schema({
+    type: {
         type: String,
-        required: true
+        default: 'Point'
+    },
+    coordinates: {
+        type: [Number],
+        index: "2dsphere"
+    }
+}, {_id: false})
+
+const PostamatSchema = new mongoose.Schema({
+    address: {
+        type: String
     },
     type: {
         type: String,
         required: true
     },
     district: {
-        type: String,
-        required: true
+        type: String
     },
     adminstrativeDistrict: {
-        type: String,
-        required: true
+        type: String
     },
     model: {
-        type: String,
-        required: true
+        type: String
     },
     rating: {
-        type: Number,
-        required: true
+        type: Number
     },
-    lat: {
-        type: Number,
-        required: true
-    },
-    lon: {
-        type: Number,
-        required: true
-    }
+    geometry: GeoSchema
 })
 
-module.exports = mongoose.model('postamat', postamatSchema)
+module.exports = mongoose.model('postamat', PostamatSchema)

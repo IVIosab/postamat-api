@@ -5,19 +5,8 @@ const Postamat = require('../models/Postamat')
 
 //Creating one postamat 
 router.post('/', async (req, res) => {
-    const postamat = new Postamat({
-        address: req.body.address,
-        type: req.body.type,
-        district: req.body.district,
-        adminstrativeDistrict: req.body.adminstrativeDistrict,
-        model: req.body.model,
-        rating: req.body.rating,
-        lat: req.body.lat,
-        lon: req.body.lon
-    })
-
     try {
-        const newPostamat = await postamat.save()
+        const newPostamat = await Postamat.create(req.body)
         res.status(201).json(newPostamat)
     } catch (err) {
         res.status(400).json({message:err.message})
@@ -25,7 +14,7 @@ router.post('/', async (req, res) => {
 })
 
 //Getting postamats based on query
-router.get('/', queryHandler, async (req, res) => {
+router.get('/', generalHandler, async (req, res) => {
     try{
         res.json(res.postamat)
     } catch (err) {
@@ -33,66 +22,80 @@ router.get('/', queryHandler, async (req, res) => {
     }
 })
 
-//Getting one postamat by id
-router.get('/:id', idHandler, async (req, res) => {
-    try{
-        res.json(res.postamat)
-    }catch(err){
-        res.status(500).json({message:err.message})
-    }
-})
-
 //Updating one postamat
-router.put('/:id', idHandler, async (req, res) => {
-    res.postamat.address = req.body.address === null ? res.postamat.address : req.body.address;
-    res.postamat.type = req.body.type === null ? res.postamat.type : req.body.type;
-    res.postamat.district = req.body.district === null ? res.postamat.district : req.body.district;
-    res.postamat.adminstrativeDistrict = req.body.adminstrativeDistrict === null ? res.postamat.adminstrativeDistrict : req.body.adminstrativeDistrict;
-    res.postamat.model = req.body.model === null ? res.postamat.model : req.body.model;
-    res.postamat.rating = req.body.rating === null ? res.postamat.rating : req.body.rating;
-    res.postamat.lat = req.body.lat === null ? res.postamat.lat : req.body.lat;
-    res.postamat.lon = req.body.lon === null ? res.postamat.lon : req.body.lon;
+router.put('/:id', async (req, res) => {
     try {
-        const updatedPostamat = await res.postamat.save()
-        res.json(updatedPostamat)
+        await Postamat.findByIdAndUpdate({_id: req.query.id}, req.body)
+        const updatedPostamat = await Postamat.findOne({_id: req.query.id}, req.body)
+        if(updatedPostamat == null){
+            res.status(404).json({message: 'Cannot Find Postamats'})
+        }
+        else{
+            res.status(200).json(updatedPostamat)
+        }
     } catch (err) {
         res.status(400).json({message: err.message})
     }
 })
 
 // Deleting one postamat
-router.delete('/:id', idHandler, async (req, res) => {
+router.delete('/:id', async (req, res) => {
     try {
-        await res.postamat.remove()
-        res.json({message: "Deleted"})
+        const deletedPostamat = await Postamat.findByIdAndDelete({_id: req.params.id})
+        if(deletedPostamat == null){
+            res.status(404).json({message: 'Cannot Find Postamats'})
+        }
+        else{
+            res.status(200).json(deletedPostamat)
+        }
     } catch (err) {
         res.status(500).json({message: err.message})
     }
 })
 
-
-async function queryHandler(req, res, next){
+async function generalHandler(req, res, next){
     let postamat
-    try {
-        postamat = await Postamat.find(req.query)
-        if(postamat == null){
-            return res.status(404).json({message: 'Cannot Find Postamat'})
+    let query = req.query
+    let area = {}
+    let circleQuery = false;
+    if(query.hasOwnProperty('circle')){
+        let circle = query.circle.slice(1,-1).split(',')
+        let lon = parseFloat(circle[0])
+        let lat = parseFloat(circle[1])
+        let r = parseInt(circle[2])
+        circleQuery = true
+        area = {
+            near: [lon, lat],
+            maxDistance: r,
+            spherical: true,
+            distanceField: "dist.calculated"
         }
-    } catch (err) {
-        return res.status(500).json({message: err.message})
+        
     }
-    res.postamat = postamat
-    next()
-}
-
-async function idHandler(req, res, next){
-    let postamat
+    delete query.circle
     try {
-        postamat = await Postamat.find({_id: req.params.id})
+        Postamat.ensureIndexes({'geometry.coordinates': '2dsphere'})
+        if(circleQuery){
+            postamat = await Postamat.find({
+                'geometry.coordinates': {
+                    $near: {
+                        $maxDistance: area.maxDistance,
+                        $geometry: {
+                            type: 'Point',
+                            coordinates: area.near
+                        }
+                    }
+                }
+            }).find(query)
+        }
+        else{
+            postamat = await Postamat.find(query)
+        }
         if(postamat == null){
-            return res.status(404).json({message: 'Cannot Find Postamat'})
+            return res.status(404).json({message: 'Cannot Find Postamats'})
         }
     } catch (err) {
+        console.log(err.message)
         return res.status(500).json({message: err.message})
     }
     res.postamat = postamat
