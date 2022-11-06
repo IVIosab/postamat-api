@@ -92,7 +92,7 @@ async function circleHandler(req, res, next){
                     }
                 }
             }
-        }).find({type: types}).find({model: model}).select("-__v").exec()
+        }).find({type: types}).find({model: model}).sort({rating: 'desc'}).select("-__v").exec()
         if(postamat == null){
             return res.status(404).json({message: 'Cannot Find Postamats'})
         }
@@ -109,7 +109,7 @@ async function districtHandler(req, res, next){
     let districts = req.query.district
     let model = req.query.model
     try {
-        postamat = await Postamat.find({type: {$in: types}}).find({district: {$in: districts}}).find({model: model}).select("-__v").exec()
+        postamat = await Postamat.find({type: {$in: types}}).find({district: {$in: districts}}).find({model: model}).sort({rating: 'desc'}).select("-__v").exec()
         if(postamat == null){
             return res.status(404).json({message: 'Cannot Find Postamats'})
         }
@@ -126,7 +126,7 @@ async function adminHandler(req, res, next){
     let admin = req.query.admin
     let model = req.query.model
     try {
-        postamat = await Postamat.find({type: {$in: types}}).find({adminstrativeDistrict: {$in: admin}}).find({model: model}).select("-__v").exec()
+        postamat = await Postamat.find({type: {$in: types}}).find({adminstrativeDistrict: {$in: admin}}).find({model: model}).sort({rating: 'desc'}).select("-__v").exec()
         if(postamat == null){
             return res.status(404).json({message: 'Cannot Find Postamats'})
         }
