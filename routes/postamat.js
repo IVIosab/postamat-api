@@ -45,8 +45,8 @@ router.get('/admin', adminHandler, async (req, res) => {
 //Updating one postamat
 router.put('/:id', async (req, res) => {
     try {
-        await Postamat.findByIdAndUpdate({_id: req.query.id}, req.body)
-        const updatedPostamat = await Postamat.findOne({_id: req.query.id}, req.body)
+        const x = await Postamat.findByIdAndUpdate(req.params.id, req.body)
+        const updatedPostamat = await Postamat.findById(req.params.id).select("-__v").exec()
         if(updatedPostamat == null){
             res.status(404).json({message: 'Cannot Find Postamats'})
         }
@@ -61,7 +61,7 @@ router.put('/:id', async (req, res) => {
 // Deleting one postamat
 router.delete('/:id', async (req, res) => {
     try {
-        const deletedPostamat = await Postamat.findByIdAndDelete({_id: req.params.id})
+        const deletedPostamat = await Postamat.findByIdAndDelete({_id: req.params.id}).select("-__v").exec()
         if(deletedPostamat == null){
             res.status(404).json({message: 'Cannot Find Postamats'})
         }
