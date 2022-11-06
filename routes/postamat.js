@@ -88,16 +88,15 @@ async function circleHandler(req, res, next){
                     $maxDistance: radius,
                     $geometry: {
                         type: 'Point',
-                        coordinates: [lon,lat]
+                        coordinates: [lat,lon]
                     }
                 }
             }
-        }).find({type: {$in: types}}).find({model: model})
+        }).find({type: {$in: types}}).find({model: model}).select("-_id -__v").exec()
         if(postamat == null){
             return res.status(404).json({message: 'Cannot Find Postamats'})
         }
     } catch (err) {
-        console.log(err.message)
         return res.status(500).json({message: err.message})
     }
     res.postamat = postamat
@@ -110,12 +109,11 @@ async function districtHandler(req, res, next){
     let districts = req.query.district.slice(1,-1).split(',')
     let model = req.query.model
     try {
-        postamat = await Postamat.find({type: {$in: types}}).find({district: {$in: districts}}).find({model: model})
+        postamat = await Postamat.find({type: {$in: types}}).find({district: {$in: districts}}).find({model: model}).select("-_id -__v").exec()
         if(postamat == null){
             return res.status(404).json({message: 'Cannot Find Postamats'})
         }
     } catch (err) {
-        console.log(err.message)
         return res.status(500).json({message: err.message})
     }
     res.postamat = postamat
@@ -128,12 +126,11 @@ async function adminHandler(req, res, next){
     let admin = req.query.admin.slice(1,-1).split(',')
     let model = req.query.model
     try {
-        postamat = await Postamat.find({type: {$in: types}}).find({adminstrativeDistrict: {$in: admin}}).find({model: model})
+        postamat = await Postamat.find({type: {$in: types}}).find({adminstrativeDistrict: {$in: admin}}).find({model: model}).select("-_id -__v").exec()
         if(postamat == null){
             return res.status(404).json({message: 'Cannot Find Postamats'})
         }
     } catch (err) {
-        console.log(err.message)
         return res.status(500).json({message: err.message})
     }
     res.postamat = postamat
