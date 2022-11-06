@@ -82,17 +82,7 @@ async function circleHandler(req, res, next){
     let model = req.query.model
     try {
         Postamat.ensureIndexes({'geometry.coordinates': '2dsphere'})
-        postamat = await Postamat.find({
-            'geometry.coordinates': {
-                $near: {
-                    $maxDistance: radius,
-                    $geometry: {
-                        type: 'Point',
-                        coordinates: [lat,lon]
-                    }
-                }
-            }
-        }).find({type: types}).find({model: model}).select("-__v").exec()
+        postamat = await Postamat.find({type: types}).find({model: model}).where('geometry.coordinates').near({center: [lat, lon], maxDistance: radius, spherical: true}).select("-__v").exec()
         if(postamat == null){
             return res.status(404).json({message: 'Cannot Find Postamats'})
         }
