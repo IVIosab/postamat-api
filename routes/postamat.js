@@ -88,7 +88,7 @@ async function circleHandler(req, res, next){
                     $maxDistance: radius,
                     $geometry: {
                         type: 'Point',
-                        coordinates: [lat,lon]
+                        coordinates: [lon,lat]
                     }
                 }
             }
