@@ -84,8 +84,12 @@ async function circleHandler(req, res, next){
         Postamat.ensureIndexes({'geometry.coordinates': '2dsphere'})
         postamat = await Postamat.find({
             'geometry.coordinates': {
-                $geoWithin: {
-                    $centerSphere: [[lat,lon],radius]
+                $nearSphere: {
+                    $maxDistance: radius,
+                    $geometry: {
+                        type: 'Point',
+                        coordinates: [lat,lon]
+                    }
                 }
             }
         }).find({type: types}).find({model: model}).select("-__v").exec()
