@@ -75,7 +75,7 @@ router.delete('/:id', async (req, res) => {
 
 async function circleHandler(req, res, next){
     let postamat
-    let types = req.query.type.slice(1,-1).split(',')
+    let types = req.query.type
     let lon = parseFloat(req.query.lon)
     let lat = parseFloat(req.query.lat)
     let radius = parseFloat(req.query.radius)
@@ -92,7 +92,7 @@ async function circleHandler(req, res, next){
                     }
                 }
             }
-        }).find({type: {$in: types}}).find({model: model}).select("-_id -__v").exec()
+        }).find({type: types}).find({model: model}).select("-_id -__v").exec()
         if(postamat == null){
             return res.status(404).json({message: 'Cannot Find Postamats'})
         }
@@ -105,8 +105,8 @@ async function circleHandler(req, res, next){
 
 async function districtHandler(req, res, next){
     let postamat
-    let types = req.query.type.slice(1,-1).split(',')
-    let districts = req.query.district.slice(1,-1).split(',')
+    let types = req.query.type
+    let districts = req.query.district
     let model = req.query.model
     try {
         postamat = await Postamat.find({type: {$in: types}}).find({district: {$in: districts}}).find({model: model}).select("-_id -__v").exec()
@@ -122,8 +122,8 @@ async function districtHandler(req, res, next){
 
 async function adminHandler(req, res, next){
     let postamat
-    let types = req.query.type.slice(1,-1).split(',')
-    let admin = req.query.admin.slice(1,-1).split(',')
+    let types = req.query.type
+    let admin = req.query.admin
     let model = req.query.model
     try {
         postamat = await Postamat.find({type: {$in: types}}).find({adminstrativeDistrict: {$in: admin}}).find({model: model}).select("-_id -__v").exec()
